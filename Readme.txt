@@ -7,3 +7,5 @@ For a benchmark to compare my model against, I use hypothetical model of shares 
 
 So, how does my model compare?  In the best year (1999), it makes 114% more than the benchmark, the worst year (2011) it loses lose %2.79 more, on average it makes 18.70% more than the benchmark of 10.13%.  If I adjust to to only hold the top 5 stocks, then it makes another 3.49% per year on average.  While past returns are not an guarantee of future returns, they are a very good indicator of future returns.  
 
+Have fun and keep programming!
+
