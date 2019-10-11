@@ -34,7 +34,7 @@ def RunBuyHoldList(tickerList:list, startDate:datetime, durationInYears:int, por
 		return tm.CloseModel(plotResults=False, saveHistoryToFile=verbose)	
 
 
-def RunPriceMomentum(tickerList:list, startDate:str='1/1/1980', durationInYears:int=29,  lookBack:int=365, ReEvaluationInterval:int=20, stockCount:int=10, filterOption:int=0, portfolioSize:int=30000, returndailyValues:bool=False, verbose:bool=False):
+def RunPriceMomentum(tickerList:list, startDate:str='1/1/1980', durationInYears:int=29,  lookBack:int=365, ReEvaluationInterval:int=20, stockCount:int=10, filterOption:int=3, portfolioSize:int=30000, returndailyValues:bool=False, verbose:bool=False):
 	#Choose the stock with the greatest long term price momentum 
 	#lookBack: days to look back to determine long term performance, ReEvaluationInterval: days before positions are re-evaluated and short term performance
 	startDate = datetime.datetime.strptime(startDate, '%m/%d/%Y')
@@ -133,26 +133,40 @@ def RunPriceMomentumBlended(tickerList:list, startDate:str='1/1/1980', durationI
 		else:
 			return cv1
 
-def TodaysRecommendations(tickerList:str, currentDate:str='5/15/2019', stockCount:int=9):
+def TodaysRecommendations(tickerList:str, stockCount:int=9, currentDate:str='', longHistoryDays:int=365, shortHistoryDays:int=30, NoFilter:bool=False):
+	if currentDate =='':  currentDate = GetTodaysDate()
+	currentDate = datetime.datetime.strptime(currentDate, '%m/%d/%Y')
+	filterOption=3
+	if NoFilter: filterOption=0
+	picker = StockPicker()
+	for t in tickerList:
+		picker.AddTicker(t)
+	shortList = picker.GetHighestPriceMomentum(currentDate=currentDate, longHistoryDays=longHistoryDays, shortHistoryDays=shortHistoryDays, stocksToReturn=stockCount, filterOption=filterOption)
+	print('Today''s recommendations', currentDate)
+	print(shortList)
+	shortList.to_csv('data/TodaysPicks.csv')
+
+def TodaysRecommendations3(tickerList:str, stockCount:int=9, currentDate:str=''):
     #return stockCount stocks built from the list from three equal sets
 	#1) high performers (at least 5% per year), recently at a discount or slowing down but not negative when looking at 40 days
 	#2) high performers (at least 5% per year), but not negative when looking at the past 20 days
 	#3) high performers (at least 5% per year), but not negative when looking at the past 40 days
 
+	if currentDate =='':  currentDate = GetTodaysDate()
 	currentDate = datetime.datetime.strptime(currentDate, '%m/%d/%Y')
 	picker = StockPicker()
 	for t in tickerList:
 		picker.AddTicker(t)
-	shortList1 = picker.GetHighestPriceMomentum(currentDate, 365, 40, int(stockCount/2), 1)
-	shortList2 = picker.GetHighestPriceMomentum(currentDate, 365, 20, int(stockCount/2), 3)
-	shortList3 = picker.GetHighestPriceMomentum(currentDate, 365, 40, int(stockCount/2), 3)
+	shortList1 = picker.GetHighestPriceMomentum(currentDate=currentDate, longHistoryDays=365, shortHistoryDays=40, stocksToReturn=int(stockCount/2), filterOption=1)
+	shortList2 = picker.GetHighestPriceMomentum(currentDate=currentDate, longHistoryDays=365, shortHistoryDays=20, stocksToReturn=int(stockCount/2), filterOption=3)
+	shortList3 = picker.GetHighestPriceMomentum(currentDate=currentDate, longHistoryDays=365, shortHistoryDays=40, stocksToReturn=int(stockCount/2), filterOption=3)
 	shortList = pd.concat([shortList1, shortList2, shortList3])
 	shortList = shortList[:stockCount]
 	print('Today''s recommendations', currentDate)
 	print(shortList)
-	return shortList
+	shortList.to_csv('data/TodaysPicks.csv')
 
-def ComparePMToBH(startYear:int=1982, endYear:int=2018, durationInYears:int = 6, lookBack:int=365, ReEvaluationInterval:int=20, stockCount:int=5, filterOption:int=1):
+def ComparePMToBH(startYear:int=1982, endYear:int=2018, durationInYears:int = 6, lookBack:int=365, ReEvaluationInterval:int=20, stockCount:int=5, filterOption:int=3):
 	modelOneName = 'BuyHold'
 	modelTwoName = 'PriceMomentum_lookBack_' + str(lookBack) +'_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption)
 	portfolioSize=30000
@@ -169,7 +183,7 @@ def ComparePMToBH(startYear:int=1982, endYear:int=2018, durationInYears:int = 6,
 	TestResults.to_csv('data/trademodel/Compare' + modelOneName + '_to_' + modelTwoName + '_year ' + str(startYear) + '_duration' + str(durationInYears) +'.csv')
 	print(TestResults)
 		
-def CompareBlendedToPM(startYear:int=1982, endYear:int=2018, durationInYears:int = 6, lookBack:int=365, ReEvaluationInterval:int=20, stockCount:int=5, filterOption:int=0):
+def CompareBlendedToPM(startYear:int=1982, endYear:int=2018, durationInYears:int = 6, lookBack:int=365, ReEvaluationInterval:int=20, stockCount:int=5, filterOption:int=3):
 	modelOneName = 'PriceMomentum'
 	modelTwoName = 'PriceMomentumBlended_lookBack_' + str(lookBack) +'_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption)
 	portfolioSize=30000
@@ -234,8 +248,7 @@ if __name__ == '__main__':
 	else:
 		print('Running default option.')
 		RunBuyHold('^SPX', startDate='1/1/1982', durationInYears=35, portfolioSize=30000, verbose=True)
-		RunPriceMomentum(tickerList = tickers, startDate='1/1/1982', durationInYears=35, ReEvaluationInterval=90, stockCount=9) 
-		RunPriceMomentumBlended(tickerList = tickers, startDate='1/1/1982', durationInYears=35, ReEvaluationInterval=90, stockCount=9)  
-		RunPriceMomentum(tickerList = tickers, startDate='1/1/1982', durationInYears=35, ReEvaluationInterval=90, stockCount=5) 
-		#TodaysRecommendations(tickers, GetTodaysDate(), 9)
+		RunPriceMomentum(tickerList = tickers, startDate='1/1/1982', durationInYears=36, ReEvaluationInterval=90, stockCount=5) 
+		RunPriceMomentum(tickerList = tickers, startDate='1/1/1982', durationInYears=36, ReEvaluationInterval=90, stockCount=9) 
+		TodaysRecommendations(tickerList=tickers, stockCount=9)
 		
