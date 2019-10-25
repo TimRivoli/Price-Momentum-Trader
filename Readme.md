@@ -5,7 +5,7 @@ true, I wanted to see how well a trading model would do if it only took into con
 
 For a benchmark to compare my model against, I use hypothetical model of shares of the ^SPX index and which are held for the duration of the test.  My estimate is that this would yield an average annual return of 10.13% from 1982 to 2017.  In the long run, it is very hard to beat a Buy and Hold strategy of good stocks held for the long term, particularly if they are large capital stocks from the S&P 500.  
 
-So, how does my model compare?  In the best year (1999), it makes 114% more than the benchmark, the worst year (2011) it loses lose %2.79 more, on average it makes 18.70% more than the benchmark of 10.13%.  If I adjust to to only hold the top 5 stocks, then it makes another 3.49% per year on average.  While past returns are not an guarantee of future returns, they are a very good indicator of future returns.  
+So, how does my model compare?  In the best year (1999), it makes 136% more than the benchmark, the worst year (1996) it loses %14.28 more, on average it makes 16.50% more than the benchmark of 10.13%.  If I adjust to to only hold the top 5 stocks, then it makes another 5.47% per year on average.  If I drop it to two stocks the returns go even higher.  While past returns are not an guarantee of future returns, they are a very good indicator of future returns. 
 
 Have fun and keep programming!
 
