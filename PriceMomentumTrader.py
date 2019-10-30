@@ -16,7 +16,7 @@ def TodaysRecommendations(tickerList:str, stockCount:int=9, currentDate:str='', 
 
 def RunBuyHold(ticker: str, startDate:datetime, durationInYears:int, ReEvaluationInterval:int=20, portfolioSize:int=30000, verbose:bool=False):
 	modelName = 'BuyHold_' + (ticker) + '_' + startDate[-4:]
-	tm = TradingModel(modelName=modelName, startingTicker=ticker, startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, traunchSize=portfolioSize/10, verbose=verbose)
+	tm = TradingModel(modelName=modelName, startingTicker=ticker, startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/10, verbose=verbose)
 	if not tm.modelReady:
 		print('Unable to initialize price history for model BuyHold date ' + str(startDate))
 		return 0
@@ -26,7 +26,7 @@ def RunBuyHold(ticker: str, startDate:datetime, durationInYears:int, ReEvaluatio
 			if dayCounter ==0:
 				tm.SellAllPositions(tm.currentDate)
 				i=0
-				while tm.TraunchesAvailable() and i < 10000: 
+				while tm.TranchesAvailable() and i < 100: 
 					tm.PlaceBuy(ticker=ticker, price=1, marketOrder=True, expireAfterDays=10, verbose=verbose)
 					i  +=1
 			dayCounter+=1
@@ -45,7 +45,7 @@ def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:
 	picker = StockPicker(startDate, endDate)
 	for t in tickerList:
 		picker.AddTicker(t)
-	tm = TradingModel(modelName='PriceMomentumShort_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption) + '_' + str(minPercentGain) + str(maxVolatility), startingTicker='^SPX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, traunchSize=portfolioSize/stockCount, verbose=verbose)
+	tm = TradingModel(modelName='PriceMomentumShort_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption) + '_' + str(minPercentGain) + str(maxVolatility), startingTicker='^SPX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
 	dayCounter = 0
 	if not tm.modelReady:
 		print('Unable to initialize price history for PriceMomentum date ' + str(startDate))
@@ -68,7 +68,7 @@ def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:
 				if len(shortList) > 0:
 					i=0
 					ii=0
-					while tm.TraunchesAvailable() and i < 100: #Over long periods 100 will not be enough, 1000 would be better, but 100 also limits the impact of early gains, after a bit you are trading $300K
+					while tm.TranchesAvailable() and i < 100: #Over long periods 100 will not be enough, 1000 would be better, but 100 also limits the impact of early gains, after a bit you are trading $300K
 						tm.PlaceBuy(ticker=shortList.index[ii], price=1, marketOrder=True, expireAfterDays=10, verbose=verbose)
 						i  +=1
 						ii +=1
@@ -90,7 +90,7 @@ def RunPriceMomentumBlended(tickerList:list, startDate:str='1/1/1980', durationI
 	picker = StockPicker(startDate, endDate)
 	for t in tickerList:
 		picker.AddTicker(t)
-	tm = TradingModel(modelName='PriceMomentum_Blended_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filterBlended_134', startingTicker='^SPX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, traunchSize=portfolioSize/stockCount, verbose=verbose)
+	tm = TradingModel(modelName='PriceMomentum_Blended_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filterBlended_134', startingTicker='^SPX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
 	dayCounter = 0
 	if not tm.modelReady:
 		print('Unable to initialize price history for PriceMomentum date ' + str(startDate))
@@ -117,7 +117,7 @@ def RunPriceMomentumBlended(tickerList:list, startDate:str='1/1/1980', durationI
 				if len(shortList) > 0:
 					i=0
 					ii=0
-					while tm.TraunchesAvailable() and i < 100: 
+					while tm.TranchesAvailable() and i < 100: 
 						tm.PlaceBuy(ticker=shortList.index[ii], price=1, marketOrder=True, expireAfterDays=10, verbose=verbose)
 						i  +=1
 						ii +=1
