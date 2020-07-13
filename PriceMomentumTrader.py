@@ -141,19 +141,19 @@ def ComparePMToBH(startYear:int=1982, endYear:int=2018, durationInYears:int=1, s
 def ExtensiveTesting1():
 	#Helper subroutine for running multiple tests
 	RunPriceMomentum(tickerList = tickers, startDate='1/1/1982', durationInYears=36, stockCount=5, ReEvaluationInterval=20, filterOption=2, longHistory=365, shortHistory=30) 
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=2, filterOption=3, longHistory=365, shortHistory=90) 
+	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9, filterOption=3, longHistory=365, shortHistory=90) 
 
 def ExtensiveTesting2():
 	#Helper subroutine for running multiple tests
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=10, filterOption=2, longHistory=120, shortHistory=90) 
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=10, filterOption=2, longHistory=180, shortHistory=90) 
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=10, filterOption=2, longHistory=240, shortHistory=90) 
+	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9, filterOption=2, longHistory=120, shortHistory=90) 
+	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9, filterOption=2, longHistory=180, shortHistory=90) 
+	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9, filterOption=2, longHistory=240, shortHistory=90) 
 
 def ExtensiveTesting3():
 	#Helper subroutine for running multiple tests
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=10, filterOption=1, longHistory=365, shortHistory=90) 
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=10, filterOption=3, longHistory=365, shortHistory=90) 
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=10, filterOption=4, longHistory=365, shortHistory=v) 
+	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9, filterOption=1, longHistory=365, shortHistory=90) 
+	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9, filterOption=3, longHistory=365, shortHistory=90) 
+	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9, filterOption=4, longHistory=365, shortHistory=v) 
 	
 def ModelPastYear():
 	#Show how each strategy performs on the past years data
