@@ -1,10 +1,10 @@
 import sys
 import pandas as pd
-import datetime
-from _classes.PriceTradeAnalyzer import TradingModel, PricingData, StockPicker, GetTodaysDate
+from _classes.PriceTradeAnalyzer import TradingModel, PricingData, StockPicker
 from _classes.TickerLists import TickerLists
+from _classes.Utility import *
 
-def RunBuyHold(ticker: str, startDate:datetime, durationInYears:int, ReEvaluationInterval:int=20, portfolioSize:int=30000, verbose:bool=False):
+def RunBuyHold(ticker: str, startDate:str, durationInYears:int, ReEvaluationInterval:int=20, portfolioSize:int=30000, verbose:bool=False):
 	#Baseline model to compare against.  Buy on day one, hold for the duration and then sell
 	modelName = 'BuyHold_' + (ticker) + '_' + startDate[-4:]
 	tm = TradingModel(modelName=modelName, startingTicker=ticker, startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/10, verbose=verbose)
@@ -88,9 +88,9 @@ def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:
 	#Choose stockCount stocks with the greatest long term (longHistory days) price appreciation, using different filter options defined in the StockPicker class
 	#shortHistory is a shorter time frame (like 90 days) used differently by different filters
 	#ReEvaluationInterval is how often to re-evaluate our choices, ideally this should be very short and not matter, otherwise the date selection is biased.
-	startDate = datetime.datetime.strptime(startDate, '%m/%d/%Y')
-	endDate =  startDate + datetime.timedelta(days=365 * durationInYears)
-	picker = StockPicker(startDate - datetime.timedelta(days=730), endDate) #Include earlier dates for statistics
+	startDate = ToDate(startDate)
+	endDate =  AddDays(startDate, 365 * durationInYears)
+	picker = StockPicker(AddDays(startDate, -730), endDate) #Include earlier dates for statistics
 	for t in tickerList:
 		picker.AddTicker(t)
 	tm = TradingModel(modelName='PriceMomentumShort_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption) + '_' + str(minPercentGain) + str(maxVolatility), startingTicker='^SPX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
@@ -153,11 +153,11 @@ def ExtensiveTesting3():
 	#Helper subroutine for running multiple tests
 	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9, filterOption=1, longHistory=365, shortHistory=90) 
 	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9, filterOption=3, longHistory=365, shortHistory=90) 
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9, filterOption=4, longHistory=365, shortHistory=v) 
+	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9, filterOption=4, longHistory=365, shortHistory=90) 
 	
 def ModelPastYear():
 	#Show how each strategy performs on the past years data
-	startDate = (GetTodaysDate() + datetime.timedelta(days=-370)).strftime("%m/%d/%Y")
+	startDate = AddDays(GetTodaysDate(), -370)
 	RunPriceMomentum(tickerList = tickers, startDate=startDate, durationInYears=1, stockCount=5, ReEvaluationInterval=20, verbose=True)
 	RunBuyHold(ticker='^SPX', startDate=startDate, durationInYears=1)
 
