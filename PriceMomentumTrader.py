@@ -93,7 +93,7 @@ def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:
 	picker = StockPicker(AddDays(startDate, -730), endDate) #Include earlier dates for statistics
 	for t in tickerList:
 		picker.AddTicker(t)
-	tm = TradingModel(modelName='PriceMomentumShort_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption) + '_' + str(minPercentGain) + str(maxVolatility), startingTicker='^SPX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
+	tm = TradingModel(modelName='PriceMomentumShort_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption) + '_' + str(minPercentGain) + str(maxVolatility), startingTicker='.INX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
 	dayCounter = 0
 	if not tm.modelReady:
 		print('Unable to initialize price history for PriceMomentum date ' + str(startDate))
@@ -129,8 +129,8 @@ def ComparePMToBH(startYear:int=1982, endYear:int=2018, durationInYears:int=1, s
 	trials = int((endYear - startYear)/durationInYears) 
 	for i in range(trials):
 		startDate = '1/2/' + str(startYear + i * durationInYears)
-		m1ev = RunBuyHold('^SPX', startDate=startDate, durationInYears=durationInYears, ReEvaluationInterval=ReEvaluationInterval, portfolioSize=portfolioSize)
-		m2ev = RunPriceMomentum(tickerList = TickerLists.SPTop70(), startDate=startDate, durationInYears=durationInYears, stockCount=stockCount, ReEvaluationInterval=ReEvaluationInterval, filterOption=filterOption,  longHistory=longHistory, shortHistory=shortHistory, portfolioSize=portfolioSize, returndailyValues=False, verbose=False)
+		m1ev = RunBuyHold('.INX', startDate=startDate, durationInYears=durationInYears, ReEvaluationInterval=ReEvaluationInterval, portfolioSize=portfolioSize)
+		m2ev = RunPriceMomentum(tickerList = TickerLists.AllTopPerformers(), startDate=startDate, durationInYears=durationInYears, stockCount=stockCount, ReEvaluationInterval=ReEvaluationInterval, filterOption=filterOption,  longHistory=longHistory, shortHistory=shortHistory, portfolioSize=portfolioSize, returndailyValues=False, verbose=False)
 		m1pg = (m1ev/portfolioSize) - 1 
 		m2pg = (m2ev/portfolioSize) - 1
 		TestResults.loc[startDate] = [durationInYears, m1ev, m2ev, m1pg, m2pg, m2pg-m1pg]
@@ -159,7 +159,7 @@ def ModelPastYear():
 	#Show how each strategy performs on the past years data
 	startDate = AddDays(GetTodaysDate(), -370)
 	RunPriceMomentum(tickerList = tickers, startDate=startDate, durationInYears=1, stockCount=5, ReEvaluationInterval=20, verbose=True)
-	RunBuyHold(ticker='^SPX', startDate=startDate, durationInYears=1)
+	RunBuyHold(ticker='.INX', startDate=startDate, durationInYears=1)
 
 if __name__ == '__main__':
 	switch = 0
@@ -178,10 +178,10 @@ if __name__ == '__main__':
 		print('Running option: ', switch)
 		ModelPastYear()
 	else:
-		tickers = TickerLists.Other()
+		tickers = TickerLists.SPTop70()
 		print('Running default option on ' + str(len(tickers)) + ' stocks.')
-		RunBuyHold('^SPX', startDate='1/1/1982', durationInYears=36, ReEvaluationInterval=5, portfolioSize=30000, verbose=False)	#Baseline
-		RunPriceMomentum(tickerList = tickers, startDate='1/1/1982', durationInYears=36, stockCount=5, ReEvaluationInterval=20, filterOption=4, longHistory=365, shortHistory=90) #Shows how the strategy works over a long time period
-		ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=1, longHistory=365, shortHistory=60) #Runs the model in one year intervals, comparing each to BuyHold
-		ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=2, longHistory=365, shortHistory=60) #Runs the model in one year intervals, comparing each to BuyHold
-		ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=4, longHistory=365, shortHistory=60) #Runs the model in one year intervals, comparing each to BuyHold
+		RunBuyHold('.INX', startDate='1/1/2000', durationInYears=10, ReEvaluationInterval=5, portfolioSize=30000, verbose=False)	#Baseline
+		RunPriceMomentum(tickerList = tickers, startDate='1/1/2000', durationInYears=10, stockCount=5, ReEvaluationInterval=20, filterOption=4, longHistory=365, shortHistory=90) #Shows how the strategy works over a long time period
+		ComparePMToBH(startYear=2000,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=1, longHistory=365, shortHistory=60) #Runs the model in one year intervals, comparing each to BuyHold
+		#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=2, longHistory=365, shortHistory=60) #Runs the model in one year intervals, comparing each to BuyHold
+		#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=4, longHistory=365, shortHistory=60) #Runs the model in one year intervals, comparing each to BuyHold

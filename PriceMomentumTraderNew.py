@@ -4,57 +4,6 @@ from _classes.PriceTradeAnalyzer import TradingModel, PricingData, StockPicker
 from _classes.TickerLists import TickerLists
 from _classes.Utility import *
 
-#ReEvaluationInterval of 20 or 40 work best, much better than 30, the filters often do little, most significant factor is sort by 1 year price change descending, some gain for filtering out high stdev
-def TodaysRecommendations(tickerList:str, stockCount:int=9, currentDate:str='', longHistoryDays:int=365, shortHistoryDays:int=90, filterOption:int=3, NoFilter:bool=False, minPercentGain=0.05):
-	if currentDate =='': 
-		currentDate = GetTodaysDate()
-	else:
-		currentDate = ToDate(currentDate)
-	startDate = AddDays(currentDate, 800)
-	#picker = StockPicker(startDate=startDate, endDate=currentDate)	#specifying a date range will force a data load
-	picker = StockPicker()
-	for t in tickerList:
-		picker.AddTicker(t)
-	shortList = picker.GetHighestPriceMomentum(currentDate=currentDate, longHistoryDays=longHistoryDays, shortHistoryDays=shortHistoryDays, stocksToReturn=stockCount, filterOption=filterOption, minPercentGain=minPercentGain)
-	print('Today''s recommendations', currentDate)
-	print(shortList)
-	shortList.to_csv('data/TodaysPicks.csv')
-
-def TodaysRecommendationsBlended(tickerList:str, longHistory:int=365, shortHistory:int=90, currentDate:str=''):
-	if currentDate =='': 
-		currentDate = GetTodaysDate()
-	else:
-		currentDate = ToDate(currentDate)
-	picker = StockPicker()
-	for t in tickerList:
-		picker.AddTicker(t)
-	list1 = picker.GetHighestPriceMomentum(currentDate=currentDate, longHistoryDays=longHistory, shortHistoryDays=shortHistory, stocksToReturn=3, filterOption=3)
-	list2 = picker.GetHighestPriceMomentum(currentDate=currentDate, longHistoryDays=longHistory, shortHistoryDays=shortHistory, stocksToReturn=3, filterOption=3)
-	list3 = picker.GetHighestPriceMomentum(currentDate=currentDate, longHistoryDays=longHistory, shortHistoryDays=shortHistory, stocksToReturn=3, filterOption=44)
-	list4 = picker.GetHighestPriceMomentum(currentDate=currentDate, stocksToReturn=6, filterOption=5)
-	candidates = pd.concat([list1, list2, list3, list4], sort=True)
-	c=candidates.columns.tolist()
-	c.insert(0,'Ticker')
-	candidates = pd.DataFrame(candidates.groupby(c).size())
-	candidates.rename(columns={0:'BlendedVoteCount'}, inplace=True)
-	candidates.sort_values('BlendedVoteCount', axis=0, ascending=False, inplace=True, kind='quicksort', na_position='last') 
-	print('Today''s recommendations', currentDate)
-	print(candidates)
-	candidates.to_csv('data/TodaysPicksBlended.csv')
-
-def TodaysRecommendationsPointValue(tickerList:str, stockCount:int=9, currentDate:str='', minPercentGain=0.05):
-	if currentDate =='': 
-		currentDate = GetTodaysDate()
-	else:
-		currentDate = ToDate(currentDate)
-	picker = StockPicker()
-	for t in tickerList:
-		picker.AddTicker(t)
-	shortList = picker.GetHighestPriceMomentum(currentDate=currentDate, stocksToReturn=stockCount, minPercentGain=minPercentGain , filterOption=5)
-	print('Today''s recommendations', currentDate)
-	print(shortList)
-	shortList.to_csv('data/TodaysPicksPointValue.csv')
-
 def RunBuyHold(ticker: str, startDate:str, durationInYears:int, ReEvaluationInterval:int=20, portfolioSize:int=30000, verbose:bool=False):
 	#Baseline model to compare against.  Buy on day one, hold for the duration and then sell
 	modelName = 'BuyHold_' + (ticker) + '_' + startDate[-4:]
@@ -161,7 +110,7 @@ def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:
 	picker = StockPicker(AddDays(startDate, -730), endDate) #Include earlier dates for statistics
 	for t in tickerList:
 		picker.AddTicker(t)
-	tm = TradingModel(modelName='PriceMomentumShort_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption) + '_' + str(minPercentGain) + str(maxVolatility), startingTicker='^SPX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
+	tm = TradingModel(modelName='PriceMomentumShort_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption) + '_' + str(minPercentGain) + str(maxVolatility), startingTicker='.INX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
 	dayCounter = 0
 	if not tm.modelReady:
 		print('Unable to initialize price history for PriceMomentum date ' + str(startDate))
@@ -200,7 +149,7 @@ def RunPriceMomentumBlended(tickerList:list, startDate:str='1/1/1980', durationI
 	stockCount = 11
 	for t in tickerList:
 		picker.AddTicker(t)
-	tm = TradingModel(modelName='PriceMomentum_Blended' + BlendDesc + '_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount), startingTicker='^SPX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
+	tm = TradingModel(modelName='PriceMomentum_Blended' + BlendDesc + '_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount), startingTicker='.INX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
 	dayCounter = 0
 	if not tm.modelReady:
 		print('Unable to initialize price history for PriceMomentum date ' + str(startDate))
@@ -236,7 +185,7 @@ def RunPointValue(tickerList:list, startDate:str='1/1/1982', durationInYears:int
 	picker = StockPicker(AddDays(startDate, -730), endDate) #Include earlier dates for statistics
 	for t in tickerList:
 		picker.AddTicker(t)
-	tm = TradingModel(modelName='PointValue_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_' + str(minPercentGain), startingTicker='^SPX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=2500, verbose=verbose)
+	tm = TradingModel(modelName='PointValue_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_' + str(minPercentGain), startingTicker='.INX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=2500, verbose=verbose)
 	dayCounter = 0
 	if not tm.modelReady:
 		print('Unable to initialize price history for PointValue date ' + str(startDate))
@@ -271,7 +220,7 @@ def ComparePMToBH(startYear:int=1982, endYear:int=2018, durationInYears:int=1, s
 	trials = int((endYear - startYear)/durationInYears) 
 	for i in range(trials):
 		startDate = '1/2/' + str(startYear + i * durationInYears)
-		m1ev = RunBuyHold('^SPX', startDate=startDate, durationInYears=durationInYears, ReEvaluationInterval=ReEvaluationInterval, portfolioSize=portfolioSize)
+		m1ev = RunBuyHold('.INX', startDate=startDate, durationInYears=durationInYears, ReEvaluationInterval=ReEvaluationInterval, portfolioSize=portfolioSize)
 		m2ev = RunPriceMomentum(tickerList = TickerLists.SPTop70(), startDate=startDate, durationInYears=durationInYears, stockCount=stockCount, ReEvaluationInterval=ReEvaluationInterval, filterOption=filterOption,  longHistory=longHistory, shortHistory=shortHistory, portfolioSize=portfolioSize, returndailyValues=False, verbose=False)
 		m1pg = (m1ev/portfolioSize) - 1 
 		m2pg = (m2ev/portfolioSize) - 1
@@ -293,7 +242,7 @@ def CompareBlendedToBH(startYear:int=1982, endYear:int=2018, durationInYears:int
 	trials = int((endYear - startYear)/durationInYears) 
 	for i in range(trials):
 		startDate = '1/2/' + str(startYear + i * durationInYears)
-		m1ev = RunBuyHold('^SPX', startDate=startDate, durationInYears=durationInYears, ReEvaluationInterval=ReEvaluationInterval, portfolioSize=portfolioSize)
+		m1ev = RunBuyHold('.INX', startDate=startDate, durationInYears=durationInYears, ReEvaluationInterval=ReEvaluationInterval, portfolioSize=portfolioSize)
 		m2ev = RunPriceMomentumBlended(tickerList = TickerLists.SPTop70(), startDate=startDate, durationInYears=durationInYears,  ReEvaluationInterval=ReEvaluationInterval, longHistory=longHistory, shortHistory=shortHistory, portfolioSize=portfolioSize, returndailyValues=False, verbose=False)
 		m1pg = (m1ev/portfolioSize) - 1 
 		m2pg = (m2ev/portfolioSize) - 1
@@ -311,7 +260,7 @@ def ComparePVToBH(startYear:int=1982, endYear:int=2018, durationInYears:int=1, s
 	trials = int((endYear - startYear)/durationInYears) 
 	for i in range(trials):
 		startDate = '1/2/' + str(startYear + i * durationInYears)
-		m1ev = RunBuyHold('^SPX', startDate=startDate, durationInYears=durationInYears, ReEvaluationInterval=ReEvaluationInterval, portfolioSize=portfolioSize)
+		m1ev = RunBuyHold('.INX', startDate=startDate, durationInYears=durationInYears, ReEvaluationInterval=ReEvaluationInterval, portfolioSize=portfolioSize)
 		m2ev = RunPointValue(tickerList = TickerLists.SPTop70(), startDate=startDate, durationInYears=durationInYears, stockCount=stockCount, ReEvaluationInterval=ReEvaluationInterval, portfolioSize=portfolioSize, returndailyValues=False, verbose=False)
 		m1pg = (m1ev/portfolioSize) - 1 
 		m2pg = (m2ev/portfolioSize) - 1
@@ -320,75 +269,32 @@ def ComparePVToBH(startYear:int=1982, endYear:int=2018, durationInYears:int=1, s
 	TestResults.to_csv('data/trademodel/Compare' + modelOneName + '_to_' + modelTwoName + '_year ' + str(startYear) + '_duration' + str(durationInYears) +'.csv')
 	print(TestResults)
 
-def ExtensiveTesting1():
-	#Helper subroutine for running multiple tests
-	#RunPriceMomentum(tickerList = tickers, startDate='1/1/1982', durationInYears=36, stockCount=5, ReEvaluationInterval=20, filterOption=2, longHistory=365, shortHistory=90) 
-	#CompareBlendedToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=5) 
-	#CompareBlendedToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=30) 
-	#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=2, filterOption=3, longHistory=365, shortHistory=90) 
-	#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=3, filterOption=3, longHistory=365, shortHistory=90) 
-	#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=1, filterOption=3, longHistory=365, shortHistory=90) 
-	#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=15, stockCount=5, filterOption=3, longHistory=365, shortHistory=90) 
-	#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=10, stockCount=5, filterOption=3, longHistory=365, shortHistory=90) 
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=2, filterOption=3, longHistory=365, shortHistory=90) 
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=2, filterOption=44, longHistory=365, shortHistory=60) 
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=2, filterOption=4, longHistory=365, shortHistory=60) 
-
-def ExtensiveTesting2():
-	#Helper subroutine for running multiple tests
-	#RunPriceMomentumBlended(tickerList = tickers, startDate='1/1/1982', durationInYears=36, stockCount=9, ReEvaluationInterval=5)  
-	#ComparePVToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5)
-	#ComparePVToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=9)
-	#ComparePVToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=15, stockCount=9)
-	#ComparePVToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=10, stockCount=9)
-	#CompareBlendedToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=15, longHistory=365, shortHistory=90)
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=2, longHistory=120, shortHistory=60) 
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=2, longHistory=180, shortHistory=60) 
-	ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=2, longHistory=240, shortHistory=60) 
-
-def ExtensiveTesting3():
-	#Helper subroutine for running multiple tests
-	#CompareBlendedToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, longHistory=365, shortHistory=45) #45 is worse than 90 on upside and downside
-	#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=2, filterOption=0, longHistory=365, shortHistory=90) 
-	#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=2, filterOption=2, longHistory=365, shortHistory=90) 
-	#CompareBlendedToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=5, longHistory=365, shortHistory=90)
-	#CompareBlendedToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=10, longHistory=365, shortHistory=90)
-	CompareBlendedToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=15, longHistory=365, shortHistory=90)
-	
-def ModelPastYear():
-	#Show how each strategy performs on the past years data
-	startDate = AddDays(GetTodaysDate(), -370)
-	RunPointValue(tickerList = tickers, startDate=startDate, durationInYears=1, stockCount=5, ReEvaluationInterval=20, verbose=True)
-	RunPriceMomentumBlended(tickerList = tickers, startDate=startDate, durationInYears=1, ReEvaluationInterval=20, verbose=True)
-	RunPriceMomentum(tickerList = tickers, startDate=startDate, durationInYears=1, stockCount=5, ReEvaluationInterval=20, verbose=True)
-	RunBuyHold(ticker='^SPX', startDate=startDate, durationInYears=1)
-
 if __name__ == '__main__':
 	switch = 0
 	if len(sys.argv[1:]) > 0: switch = sys.argv[1:][0]
 	tickers = TickerLists.SPTop70()
 	if switch == '1':
 		print('Running option: ', switch)
-		ExtensiveTesting1()
+		RunPriceMomentum(tickerList = tickers, startDate='1/1/1982', durationInYears=36, stockCount=5, ReEvaluationInterval=20, filterOption=2, longHistory=365, shortHistory=90) 
+		CompareBlendedToBH(startYear=2000,endYear=2010, durationInYears=1, ReEvaluationInterval=5) 
+		#CompareBlendedToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=30) 
+		#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=2, filterOption=3, longHistory=365, shortHistory=90) 
 	elif switch == '2':
 		print('Running option: ', switch)
-		ExtensiveTesting2()
+		ComparePMToBH(startYear=2000,endYear=2010, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=2, longHistory=120, shortHistory=60) 
+		#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=2, longHistory=180, shortHistory=60) 
+		#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=2, longHistory=240, shortHistory=60) 
 	elif switch == '3':
 		print('Running option: ', switch)
-		ExtensiveTesting3()
-	elif switch == '4':
-		print('Running option: ', switch)
-		ModelPastYear()
+		#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=2, filterOption=0, longHistory=365, shortHistory=90) 
+		#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=2, filterOption=2, longHistory=365, shortHistory=90) 
+		#CompareBlendedToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=5, longHistory=365, shortHistory=90)
+		#CompareBlendedToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=10, longHistory=365, shortHistory=90)
+		CompareBlendedToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=15, longHistory=365, shortHistory=90)
 	else:
-		tickers = TickerLists.Other()
+		tickers = TickerLists.SPTop70()
 		print('Running default option on ' + str(len(tickers)) + ' stocks.')
-		#RunBuyHold('^SPX', startDate='1/1/1982', durationInYears=36, ReEvaluationInterval=5, portfolioSize=30000, verbose=False)	#Baseline
-		#RunPriceMomentum(tickerList = tickers, startDate='1/1/1982', durationInYears=36, stockCount=5, ReEvaluationInterval=20, filterOption=4, longHistory=365, shortHistory=90) #Shows how the strategy works over a long time period
-		#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=1, longHistory=365, shortHistory=60) #Runs the model in one year intervals, comparing each to BuyHold
-		#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=2, longHistory=365, shortHistory=60) #Runs the model in one year intervals, comparing each to BuyHold
-		#ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=4, longHistory=365, shortHistory=60) #Runs the model in one year intervals, comparing each to BuyHold
-		#RunPointValue(tickerList = tickers, startDate='1/1/1982', durationInYears=36, stockCount=5, ReEvaluationInterval=30)
-		#TodaysRecommendationsPointValue(tickerList=tickers, stockCount=9, minPercentGain=.05)
-		#TodaysRecommendations(tickerList=tickers, stockCount=9, minPercentGain=.05, filterOption=3)
-		TodaysRecommendationsBlended(tickerList=tickers) 
-		TodaysRecommendations(tickerList=tickers, stockCount=100, filterOption=0)
+		RunBuyHold('.INX', startDate='1/1/1982', durationInYears=36, ReEvaluationInterval=5, portfolioSize=30000, verbose=False)	#Baseline
+		RunPriceMomentum(tickerList = tickers, startDate='1/1/1982', durationInYears=36, stockCount=5, ReEvaluationInterval=20, filterOption=4, longHistory=365, shortHistory=90) #Shows how the strategy works over a long time period
+		ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=1, longHistory=365, shortHistory=60) #Runs the model in one year intervals, comparing each to BuyHold
+		RunPointValue(tickerList = tickers, startDate='1/1/1982', durationInYears=36, stockCount=5, ReEvaluationInterval=30)
