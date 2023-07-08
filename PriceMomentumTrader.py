@@ -26,7 +26,7 @@ def RunBuyHold(ticker: str, startDate:str, durationInYears:int, ReEvaluationInte
 		print('Ending Value: ', cash + asset, '(Cash', cash, ', Asset', asset, ')')
 		return tm.CloseModel(plotResults=False, saveHistoryToFile=verbose)	
 
-def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:int=36, stockCount:int=9, ReEvaluationInterval:int=20, filterOption:int=3, longHistory:int=365, shortHistory:int=90, minPercentGain=0.05, maxVolatility=.12, portfolioSize:int=30000, returndailyValues:bool=False, verbose:bool=False):
+def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:int=36, stockCount:int=9, ReEvaluationInterval:int=20, filterOption:int=3, longHistory:int=365, shortHistory:int=90, minPercentGain=0.05, portfolioSize:int=30000, returndailyValues:bool=False, verbose:bool=False):
 	#Choose stockCount stocks with the greatest long term (longHistory days) price appreciation, using different filter options defined in the StockPicker class
 	#shortHistory is a shorter time frame (like 90 days) used differently by different filters
 	#ReEvaluationInterval is how often to re-evaluate our choices, ideally this should be very short and not matter, otherwise the date selection is biased.
@@ -36,7 +36,7 @@ def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:
 	picker = StockPicker(AddDays(startDate, -730), endDate) #Include earlier dates for statistics
 	for t in tickerList:
 		picker.AddTicker(t)
-	tm = TradingModel(modelName='PriceMomentumShort_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption) + '_' + str(minPercentGain) + str(maxVolatility), startingTicker='.INX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
+	tm = TradingModel(modelName='PriceMomentumShort_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption) + '_' + str(minPercentGain), startingTicker='.INX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
 	dayCounter = 0
 	if not tm.modelReady:
 		print('Unable to initialize price history for PriceMomentum date ' + str(startDate))
@@ -50,7 +50,7 @@ def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:
 				c, a = tm.Value()
 				print(tm.modelName, int(c), int(a), int(c+a))
 				print('available/buy/sell/long',tm.PositionSummary())
-				candidates = picker.GetHighestPriceMomentum(currentDate, longHistoryDays=longHistory, shortHistoryDays=shortHistory, stocksToReturn=stockCount, filterOption=filterOption, minPercentGain=minPercentGain, maxVolatility=maxVolatility)
+				candidates = picker.GetHighestPriceMomentum(currentDate, longHistoryDays=longHistory, shortHistoryDays=shortHistory, stocksToReturn=stockCount, filterOption=filterOption, minPercentGain=minPercentGain)
 				if allocateByPointValue:
 					print('Allocating by point value')
 					candidates = pd.DataFrame(candidates.groupby(['Ticker'])['Point_Value'].sum()) #Group by ticker, sum Point_Value and call that TargetHoldings

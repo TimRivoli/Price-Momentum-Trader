@@ -43,65 +43,7 @@ def RunBuyHoldList(tickerList:list, startDate:str, durationInYears:int, portfoli
 		print('Ending Value: ', cash + asset, '(Cash', cash, ', Asset', asset, ')')
 		return tm.CloseModel(plotResults=False, saveHistoryToFile=verbose)	
 
-def AlignPositions(tm:TradingModel, targetPositions:pd.DataFrame, stockCount:int, allocateByPointValue:bool= False, verbose:bool = False):
-	#Helper function.  Performs necessary Buy/Sells to get from current positions to target positions
-	print(targetPositions)
-	TotalTranches = tm._tranchCount
-	targetPositions=pd.DataFrame(targetPositions.groupby(['Ticker','pointValue']).size()).reset_index()
-	targetPositions.set_index(['Ticker'], inplace=True)
-	targetPositions.rename(columns={0:'TargetHoldings'}, inplace=True)
-	targetPositions.sort_values(by=['TargetHoldings', 'pointValue'], axis=0, ascending=False, inplace=True, kind='quicksort', na_position='last') 
-	targetPositions = targetPositions[:stockCount]
-	print(targetPositions)
-	if allocateByPointValue:
-		TotalPoints = targetPositions['pointValue'].sum()  
-		scale = TotalTranches/TotalPoints
-		print('scale', TotalPoints, TotalTranches, scale)
-		targetPositions.loc[:, 'TargetHoldings'] =  round(targetPositions.loc[:, 'TargetHoldings'] * targetPositions.loc[:, 'pointValue'] * scale)
-	else:
-		TotalTargets = targetPositions['TargetHoldings'].sum()  
-		scale = TotalTranches/TotalTargets
-		print('scale', TotalTargets, TotalTranches, scale)
-		targetPositions.loc[:, 'TargetHoldings'] =  round(targetPositions.loc[:, 'TargetHoldings'] * scale)
-	print(targetPositions)
-	currentPositions = tm.GetPositions(asDataFrame=True)
-	if len(currentPositions) > 0:	#evaluate the difference between current holdings and target, act accordingly
-		targetPositions = targetPositions.join(currentPositions, how='outer')
-		targetPositions.fillna(value=0, inplace=True)				
-		targetPositions['Difference'] = targetPositions['TargetHoldings'] - targetPositions['CurrentHoldings']
-		print(targetPositions)
-		for i in range(len(targetPositions)):
-			sells = int(targetPositions.iloc[i]['Difference'])
-			if sells < 0:
-				t = targetPositions.index.values[i]
-				print('Sell ' + str(abs(sells)) + ' ' + t)
-				for _ in range(abs(sells)): 
-					tm.PlaceSell(ticker=t, price=1, marketOrder=True, expireAfterDays=10, verbose=verbose)
-		tm.ProcessDay(withIncrement=False)
-		for i in range(len(targetPositions)):
-			buys = int(targetPositions.iloc[i]['Difference'])
-			if buys > 0:
-				t = targetPositions.index.values[i]
-				print('Buy ' + str(buys) + ' ' + t)
-				for _ in range(buys):
-					tm.PlaceBuy(ticker=t, price=1, marketOrder=True, expireAfterDays=10, verbose=verbose)								
-		tm.ProcessDay(withIncrement=False)
-	elif len(targetPositions) > 0:	
-		for i in range(len(targetPositions)):
-			buys = int(targetPositions.iloc[i]['TargetHoldings'])
-			if buys > 0:
-				t = targetPositions.index.values[i]
-				print(t)
-				print(buys)
-				print('Buy ' + str(buys) + ' ' + t)
-				for _ in range(buys):
-					tm.PlaceBuy(ticker=t, price=1, marketOrder=True, expireAfterDays=10, verbose=verbose)								
-		tm.ProcessDay(withIncrement=False)
-	print(tm.GetPositions(asDataFrame=True))
-	print(tm.PositionSummary())
-
-
-def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:int=36, stockCount:int=9, ReEvaluationInterval:int=20, filterOption:int=3, longHistory:int=365, shortHistory:int=90, minPercentGain=0.05, maxVolatility=.12, portfolioSize:int=30000, returndailyValues:bool=False, verbose:bool=False):
+def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:int=36, stockCount:int=9, ReEvaluationInterval:int=20, filterOption:int=3, longHistory:int=365, shortHistory:int=90, minPercentGain=0.05, portfolioSize:int=30000, returndailyValues:bool=False, verbose:bool=False):
 	#Choose stockCount stocks with the greatest long term (longHistory days) price appreciation, using different filter options defined in the StockPicker class
 	#shortHistory is a shorter time frame (like 90 days) used differently by different filters
 	#ReEvaluationInterval is how often to re-evaluate our choices, ideally this should be very short and not matter, otherwise the date selection is biased.
@@ -110,7 +52,7 @@ def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:
 	picker = StockPicker(AddDays(startDate, -730), endDate) #Include earlier dates for statistics
 	for t in tickerList:
 		picker.AddTicker(t)
-	tm = TradingModel(modelName='PriceMomentumShort_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption) + '_' + str(minPercentGain) + str(maxVolatility), startingTicker='.INX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
+	tm = TradingModel(modelName='PriceMomentumShort_longHistory_' + str(longHistory) +'_shortHistory_' + str(shortHistory) + '_reeval_' + str(ReEvaluationInterval) + '_stockcount_' + str(stockCount) + '_filter' + str(filterOption) + '_' + str(minPercentGain), startingTicker='.INX', startDate=startDate, durationInYears=durationInYears, totalFunds=portfolioSize, tranchSize=portfolioSize/stockCount, verbose=verbose)
 	dayCounter = 0
 	if not tm.modelReady:
 		print('Unable to initialize price history for PriceMomentum date ' + str(startDate))
@@ -124,8 +66,11 @@ def RunPriceMomentum(tickerList:list, startDate:str='1/1/1982', durationInYears:
 				c, a = tm.Value()
 				print(tm.modelName, int(c), int(a), int(c+a))
 				print('available/buy/sell/long',tm.PositionSummary())
-				candidates = picker.GetHighestPriceMomentum(currentDate, longHistoryDays=longHistory, shortHistoryDays=shortHistory, stocksToReturn=stockCount, filterOption=filterOption, minPercentGain=minPercentGain, maxVolatility=maxVolatility)
-				AlignPositions(tm=tm, targetPositions=candidates, stockCount=stockCount, allocateByPointValue=False)
+				candidates = picker.GetHighestPriceMomentum(currentDate, longHistoryDays=longHistory, shortHistoryDays=shortHistory, stocksToReturn=stockCount, filterOption=filterOption, minPercentGain=minPercentGain)
+				print('Allocating evenly')
+				candidates = pd.DataFrame(candidates.groupby(['Ticker']).size()) #Group by ticker with new colum for TargetHoldings, .size=count; .sum=sum, keeps only the index and the count
+				candidates.rename(columns={0:'TargetHoldings'}, inplace=True)
+				tm.AlignPositions(targetPositions=candidates)
 			tm.ProcessDay()
 			dayCounter+=1
 			if dayCounter >= ReEvaluationInterval: dayCounter=0
@@ -168,7 +113,10 @@ def RunPriceMomentumBlended(tickerList:list, startDate:str='1/1/1980', durationI
 				list3 = picker.GetHighestPriceMomentum(currentDate, longHistoryDays=longHistory, shortHistoryDays=shortHistory, stocksToReturn=2, filterOption=44, minPercentGain=minPercentGain)
 				list4 = picker.GetHighestPriceMomentum(currentDate=currentDate, stocksToReturn=5, filterOption=5)
 				candidates = pd.concat([list1, list2, list3], sort=True)
-				AlignPositions(tm=tm, targetPositions=candidates, stockCount=stockCount, allocateByPointValue=False) #Each group given equal weight
+				print('Allocating evenly')
+				candidates = pd.DataFrame(candidates.groupby(['Ticker']).size()) #Group by ticker with new colum for TargetHoldings, .size=count; .sum=sum, keeps only the index and the count
+				candidates.rename(columns={0:'TargetHoldings'}, inplace=True)
+				tm.AlignPositions(targetPositions=candidates) 
 			tm.ProcessDay()
 			dayCounter+=1
 			if dayCounter >= ReEvaluationInterval: dayCounter=0
@@ -200,7 +148,11 @@ def RunPointValue(tickerList:list, startDate:str='1/1/1982', durationInYears:int
 				print(tm.modelName, int(c), int(a), int(c+a))
 				print('available/buy/sell/long',tm.PositionSummary())
 				candidates = picker.GetHighestPriceMomentum(currentDate, stocksToReturn=stockCount, minPercentGain=minPercentGain, filterOption=5)
-				AlignPositions(tm=tm, targetPositions=candidates, stockCount=stockCount, allocateByPointValue=True)
+				print('Allocating by point value')
+				candidates = pd.DataFrame(candidates.groupby(['Ticker'])['Point_Value'].sum()) #Group by ticker, sum Point_Value and call that TargetHoldings
+				candidates.rename(columns={'Point_Value':'TargetHoldings'}, inplace=True)
+				#print(candidates)
+				tm.AlignPositions(targetPositions=candidates)
 			tm.ProcessDay()
 			dayCounter+=1
 			if dayCounter >= ReEvaluationInterval: dayCounter=0
@@ -298,3 +250,4 @@ if __name__ == '__main__':
 		RunPriceMomentum(tickerList = tickers, startDate='1/1/1982', durationInYears=36, stockCount=5, ReEvaluationInterval=20, filterOption=4, longHistory=365, shortHistory=90) #Shows how the strategy works over a long time period
 		ComparePMToBH(startYear=1982,endYear=2018, durationInYears=1, ReEvaluationInterval=20, stockCount=5, filterOption=1, longHistory=365, shortHistory=60) #Runs the model in one year intervals, comparing each to BuyHold
 		RunPointValue(tickerList = tickers, startDate='1/1/1982', durationInYears=36, stockCount=5, ReEvaluationInterval=30)
+
